@@ -1,17 +1,23 @@
 import { createStore } from "vuex";
+import shop from "@/api/shop.js";
 
 const store = createStore({
   state: {
     products: [],
   },
   getters: {
-    productsCount() {
-      //...
+    avaliableProducts(state) {
+      return state.products.filter((product) => product.inventory > 0);
     },
   },
   actions: {
-    fetchProducts() {
-      //make the call
+    fetchProducts({ commit }) {
+      return new Promise((resolve, reject) => {
+        shop.getProducts((products) => {
+          commit("setProduct", products);
+          resolve();
+        });
+      });
     },
   },
   mutations: {
