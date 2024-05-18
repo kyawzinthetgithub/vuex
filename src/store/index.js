@@ -1,5 +1,6 @@
 import { createStore } from "vuex";
-import shop from "@/api/shop.js";
+import actions from "./action";
+("@/store/action.js");
 
 const store = createStore({
   state: {
@@ -10,35 +11,32 @@ const store = createStore({
     avaliableProducts(state) {
       return state.products.filter((product) => product.inventory > 0);
     },
-  },
-  actions: {
-    fetchProducts({ commit }) {
-      return new Promise((resolve, reject) => {
-        shop.getProducts((products) => {
-          commit("setProduct", products);
-          resolve();
-        });
+    cartProducts(state) {
+      return state.cart.map((cartItem) => {
+        const product = state.products.find(
+          (product) => product.id == cartItem.id
+        );
+        return {
+          title: product.title,
+          price: product.price,
+          quantity: cartItem.quanity,
+        };
       });
     },
-
-    //add to cart
-    addProductToCart(context, product) {
-      if (product.inventory > 0) {
-        //find items
-        const cartItem = context.state.cart.find(
-          (item) => item.id === product.id
-        );
-        if (!cartItem) {
-          //add to cart
-          context.commit("pushProductToCart", product.id);
-        } else {
-          //push quanity to cart
-          context.commit("increaseProductToCart", cartItem);
-        }
-        context.commit("decreaseProductInventory", product);
-      }
+    cartTotal(state, getters) {
+      let total = 0;
+      getters.cartProducts.forEach((product) => {
+        total += product.price * product.quanity;
+      });
+      return total;
+      // return getters.cartProducts.reduce(
+      //   (total, product) => total + product.price * product.quanity,
+      //   0
+      // );
     },
   },
+  actions,
+
   mutations: {
     //update state with single state changing
     setProduct(state, products) {
@@ -48,15 +46,16 @@ const store = createStore({
     pushProductToCart(state, productId) {
       state.cart.push({
         id: productId,
-        quanity: 1,
+        quanity: +1,
       });
     },
 
     increaseProductToCart(cartItem) {
+      console.log(typeof cartItem);
       cartItem.quanity++;
     },
 
-    decreaseProductInventory(state, product) {
+    decreaseProductInventory(product) {
       product.inventory--;
     },
   },
